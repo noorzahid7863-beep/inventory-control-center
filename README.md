@@ -1,17 +1,47 @@
-# Week 3 - Day 3: React Core Concepts (Day 1 of 3)
+# 📦 Inventory Master Dashboard — React Core Concepts (3-Day Complete)
 
-## Overview
-This repository contains the Week 3, Day 3 implementation for the Full-Stack Engineering Roadmap. It marks Day 1 of the 3-day React Core Concepts module, focusing on JSX rules, component architecture, component composition, props passing, the `children` prop, and unidirectional (one-way) data flow.
+A high-performance, aesthetically professional Inventory Management Dashboard built with **Next.js**, **React**, **TypeScript**, and **Tailwind CSS**. This repository serves as the official capstone project for the **React Core Concepts (3-Day Roadmap)**, demonstrating clean component composition, state management, lifecycle hooks, controlled forms, conditional rendering, and browser Web Speech API voice synthesis.
 
-## Participant Details
-- **Participant:** Noor Zahid
-- **Mentor / Reviewer:** Muhammad Zeeshan
-- **Module:** Week 3 - Day 3 (React Core Concepts - Day 1 of 3)
+---
 
-## Covered Concepts & Goals
-1. **JSX Rules & Syntax:** Structuring UI elements using React JSX returning single fragments, closing tags, camelCase attributes (`className`), and embedded JS expressions (`{}`).
-2. **Components & Composition:** Deconstructing UI layout into modular, reusable components (`Navbar`, `SummaryCard`, `ProductCard`).
-3. **Props & Unidirectional Data Flow:** Passing dynamic, immutable properties top-down from parent to child components.
-4. **Children Prop Pattern:** Utilizing the implicit `children` prop to compose wrapper layouts and dynamic slot views.
+## 🌟 Key Features & Implementation Breakdown
 
-## Project Structure
+### 1. **Day 1: Component Architecture & Props**
+* **Modular Components:** Divided into clean sub-components including `Navbar`, `SummaryCard`, and `ProductCard`.
+* **Prop Passing & Children Prop:** Demonstrates unidirectional data flow, custom layout children injection, and strong TypeScript interfaces.
+* **Saas UI Design:** Modern glassmorphism card layouts, hover responsiveness, and clean typography.
+
+### 2. **Day 2: State Management & Interactivity**
+* **`useState` Integration:** Reactive state updates for total inventory items, filtering categories, and real-time product list management.
+* **Interactive Dynamic Catalog:** Ability to dynamically add new products and remove existing items live without page reload.
+* **Controlled Forms:** Form inputs bound directly to React state variables.
+
+### 3. **Day 3: Lifecycle, Validation & Voice Engine**
+* **`useEffect` Lifecycle Hook:** Real-time system clock updating every second with automatic cleanup intervals.
+* **Form Validation:** Real-time error handling with voice-assisted alerts for empty product names or invalid prices.
+* **Conditional Filtering:** Dynamic view filtering by categories (*All, Electronics, Computers, Accessories, General*).
+* **Web Speech API:** Browser native Text-to-Speech voice feedback when adding/removing items or triggering validation errors.
+
+---
+
+## 🛠️ Tech Stack & Dependencies
+
+* **Framework:** Next.js (App Router)
+* **Library:** React 19
+* **Language:** TypeScript
+* **Styling:** Tailwind CSS (Glassmorphism, Gradient Grids, Custom Animations)
+* **Voice Engine:** Web Speech API (`window.speechSynthesis`)
+
+---
+
+## 🚀 Getting Started
+
+### Prerequisites
+Make sure you have Node.js (v18+) installed on your machine.
+
+### Installation & Local Setup
+
+1. **Clone the repository:**
+   ```bash
+   git clone [https://github.com/your-username/my-app.git](https://github.com/your-username/my-app.git)
+   cd my-app
