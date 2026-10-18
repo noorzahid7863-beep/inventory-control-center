@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useReducer, useRef, useMemo, useCallback, createContext, useContext, useEffect } from 'react';
+import ExternalApiFeed from '@/components/ExternalApiFeed';
 
 // --- Types ---
 interface Product {
@@ -355,6 +356,9 @@ const DashboardContent = () => {
           <p className="text-slate-400 text-base font-medium">No inventory items found.</p>
         </div>
       )}
+
+      {/* TanStack Query Integration */}
+      <ExternalApiFeed />
     </div>
   );
 };
