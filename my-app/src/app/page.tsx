@@ -1,315 +1,390 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import Navbar from "@/components/Navbar";
-import SummaryCard from "@/components/SummaryCard";
-import ProductCard from "@/components/ProductCard";
+import React, { useState, useReducer, useRef, useMemo, useCallback, createContext, useContext, useEffect } from 'react';
 
+// --- Types ---
 interface Product {
-  id: number;
+  id: string;
   name: string;
-  price: number;
   category: string;
-  status: string;
+  price: number;
+  imageUrl?: string;
 }
 
-export default function Page() {
-  const dashboardData = {
-    appName: "Inventory Mgmt System",
-    user: "Noor Zahid",
-  };
+type Action =
+  | { type: 'SET_PRODUCTS'; payload: Product[] }
+  | { type: 'ADD_PRODUCT'; payload: Omit<Product, 'id'> }
+  | { type: 'DELETE_PRODUCT'; payload: string };
 
-  // State Management
-  const [products, setProducts] = useState<Product[]>([
-    { id: 1, name: 'iPhone 16 Pro', price: 999, category: 'Electronics', status: 'In Stock' },
-    { id: 2, name: 'MacBook Pro M3', price: 1999, category: 'Computers', status: 'In Stock' },
-    { id: 3, name: 'Samsung Galaxy S25', price: 899, category: 'Electronics', status: 'Low Stock' },
-    { id: 4, name: 'AirPods Pro', price: 249, category: 'Accessories', status: 'In Stock' }
-  ]);
+interface InventoryContextType {
+  products: Product[];
+  dispatch: React.Dispatch<Action>;
+  speak: (text: string) => void;
+}
 
-  // Controlled Form States
-  const [newProductName, setNewProductName] = useState('');
-  const [newProductPrice, setNewProductPrice] = useState('');
-  const [newProductCategory, setNewProductCategory] = useState('Electronics');
-  const [formError, setFormError] = useState('');
+// Helper to get image/emoji based on product name
+const getProductImage = (name: string) => {
+  const lowerName = name.toLowerCase();
+  if (lowerName.includes('laptop') || lowerName.includes('computer') || lowerName.includes('macbook')) {
+    return '💻';
+  } else if (lowerName.includes('mouse')) {
+    return '🖱️';
+  } else if (lowerName.includes('keyboard')) {
+    return '⌨️';
+  } else if (lowerName.includes('monitor') || lowerName.includes('screen') || lowerName.includes('display')) {
+    return '🖥️';
+  } else if (lowerName.includes('phone') || lowerName.includes('mobile') || lowerName.includes('iphone')) {
+    return '📱';
+  } else if (lowerName.includes('headphone') || lowerName.includes('headset') || lowerName.includes('audio')) {
+    return '🎧';
+  } else if (lowerName.includes('chair') || lowerName.includes('desk')) {
+    return '🪑';
+  } else if (lowerName.includes('camera')) {
+    return '📷';
+  }
+  return '📦';
+};
 
-  // Conditional Rendering & Clock
-  const [selectedCategory, setSelectedCategory] = useState('All');
-  const [lastUpdated, setLastUpdated] = useState('');
-
-  // 100% Working Speech Synthesis Function
-  const speakText = (text: string) => {
+// --- Custom Hook for Speech Synthesis ---
+const useSpeech = () => {
+  const speak = useCallback((text: string) => {
     if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
-      window.speechSynthesis.cancel(); // پچھلی آواز کینسل کریں
+      window.speechSynthesis.cancel();
       const utterance = new SpeechSynthesisUtterance(text);
-      utterance.rate = 1.0;  // نارمل سپیڈ
-      utterance.pitch = 1.0; // نارمل پچ
-      utterance.volume = 1.0; // فل والیوم
+      utterance.rate = 0.95;
+      utterance.pitch = 1.0;
+      utterance.volume = 1.0;
       window.speechSynthesis.speak(utterance);
     }
-  };
-
-  // Side Effects for Clock
-  useEffect(() => {
-    setLastUpdated(new Date().toLocaleTimeString());
-    const timer = setInterval(() => {
-      setLastUpdated(new Date().toLocaleTimeString());
-    }, 1000);
-
-    return () => clearInterval(timer);
   }, []);
 
-  // Form Submission Handler with Voice
-  const handleAddProduct = (e: React.FormEvent) => {
+  return { speak };
+};
+
+// --- Context ---
+const InventoryContext = createContext<InventoryContextType | undefined>(undefined);
+
+const useInventory = () => {
+  const context = useContext(InventoryContext);
+  if (!context) throw new Error('useInventory must be used within InventoryProvider');
+  return context;
+};
+
+// --- Initial Mock Data ---
+const initialProducts: Product[] = [
+  { id: '1', name: 'Laptop Pro Max', category: 'Electronics', price: 1200 },
+  { id: '2', name: 'Wireless Mouse', category: 'Accessories', price: 25 },
+  { id: '3', name: 'Gaming Keyboard', category: 'Accessories', price: 75 },
+  { id: '4', name: '27-inch Monitor', category: 'Electronics', price: 300 },
+];
+
+function inventoryReducer(state: Product[], action: Action): Product[] {
+  let newState: Product[];
+  switch (action.type) {
+    case 'SET_PRODUCTS':
+      return action.payload;
+    case 'ADD_PRODUCT':
+      newState = [
+        { ...action.payload, id: Date.now().toString() },
+        ...state,
+      ];
+      break;
+    case 'DELETE_PRODUCT':
+      newState = state.filter((p) => p.id !== action.payload);
+      break;
+    default:
+      return state;
+  }
+
+  // LocalStorage save
+  if (typeof window !== 'undefined') {
+    localStorage.setItem('inventory_items', JSON.stringify(newState));
+  }
+  return newState;
+}
+
+// --- Component: Header ---
+const Header = () => (
+  <header className="flex flex-col md:flex-row justify-between items-start md:items-center pb-6 border-b border-slate-800/80 gap-4">
+    <div>
+      <div className="flex items-center gap-3">
+        <span className="px-3 py-1 bg-blue-600/20 text-blue-400 rounded-lg border border-blue-500/30 font-mono text-xs uppercase tracking-wider font-semibold">
+          Week 4 Engine
+        </span>
+        <span className="text-emerald-400 text-xs font-semibold flex items-center gap-2 bg-emerald-500/10 px-3 py-1 rounded-lg border border-emerald-500/20">
+          <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+          Voice & Auto-Storage Active
+        </span>
+      </div>
+      <h1 className="text-3xl lg:text-5xl font-black text-white mt-3 tracking-tight bg-gradient-to-r from-white via-slate-100 to-slate-400 bg-clip-text text-transparent">
+        Inventory Control Center
+      </h1>
+      <p className="text-slate-400 text-base mt-1">
+        Real-time item creation with Voice Alerts, Persistent Storage & Auto Visual Preview
+      </p>
+    </div>
+    <div className="flex items-center gap-4 bg-slate-900/90 p-3 rounded-2xl border border-slate-800 shadow-xl">
+      <div className="w-12 h-12 rounded-xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-purple-600 flex items-center justify-center font-black text-white text-lg shadow-lg shadow-blue-500/25">
+        NZ
+      </div>
+      <div className="pr-3">
+        <p className="text-xs text-slate-400 font-medium">Engineer Account</p>
+        <p className="text-base font-bold text-slate-100">Noor Zahid</p>
+      </div>
+    </div>
+  </header>
+);
+
+// --- Component: Stat Card ---
+const StatCard = ({ title, value, color, icon, subtitle }: { title: string; value: number | string; color: string; icon: string; subtitle: string }) => (
+  <div className="relative group overflow-hidden bg-slate-900/80 backdrop-blur-2xl p-7 rounded-2xl border border-slate-800/90 hover:border-slate-700 transition-all duration-300 shadow-2xl">
+    <div className={`absolute top-0 left-0 w-2 h-full ${color}`} />
+    <div className="flex justify-between items-start">
+      <div>
+        <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">{title}</p>
+        <h3 className="text-4xl font-black text-white mt-2 tracking-tight">{value}</h3>
+        <p className="text-xs text-slate-500 mt-2 font-medium">{subtitle}</p>
+      </div>
+      <span className="text-3xl p-4 bg-slate-800/60 rounded-2xl border border-slate-700/60 text-slate-200 shadow-inner">{icon}</span>
+    </div>
+  </div>
+);
+
+// --- Component: Add Product Form ---
+const AddProductForm = () => {
+  const { dispatch, speak } = useInventory();
+  const [name, setName] = useState('');
+  const [category, setCategory] = useState('Electronics');
+  const [price, setPrice] = useState('');
+  const nameInputRef = useRef<HTMLInputElement>(null);
+
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newProductName.trim()) {
-      setFormError('⚠️ Product name is required!');
-      speakText('Please enter product name');
-      return;
-    }
-    if (!newProductPrice || Number(newProductPrice) <= 0) {
-      setFormError('⚠️ Please enter a valid price (> $0)!');
-      speakText('Please enter a valid price');
-      return;
-    }
+    if (!name.trim() || !price) return;
 
-    const newItem: Product = {
-      id: Date.now(),
-      name: newProductName,
-      price: Number(newProductPrice),
-      category: newProductCategory,
-      status: 'In Stock'
-    };
+    const numPrice = parseFloat(price);
+    dispatch({
+      type: 'ADD_PRODUCT',
+      payload: { name, category, price: numPrice },
+    });
 
-    setProducts([newItem, ...products]);
-    
-    // 🔊 یہاں خود بخود بولے گا!
-    speakText(`${newProductName} added successfully`);
+    // Voice announcement
+    speak(`Added ${name} to inventory for ${numPrice} dollars.`);
 
-    setNewProductName('');
-    setNewProductPrice('');
-    setNewProductCategory('Electronics');
-    setFormError('');
+    setName('');
+    setPrice('');
+    nameInputRef.current?.focus();
   };
 
-  // Delete Item with Voice
-  const handleDeleteProduct = (id: number, name: string) => {
-    setProducts(products.filter(p => p.id !== id));
-    speakText(`${name} removed`);
-  };
-
-  // Filter Logic
-  const filteredProducts = selectedCategory === 'All'
-    ? products
-    : products.filter(p => p.category === selectedCategory);
+  const previewIcon = name ? getProductImage(name) : '✨';
 
   return (
-    <div className="min-h-screen bg-[#f8fafc] font-sans text-slate-800 antialiased selection:bg-sky-500/20 selection:text-sky-900 relative">
-      
-      {/* Background Glows */}
-      <div className="fixed top-0 left-0 w-full h-full -z-10 overflow-hidden pointer-events-none">
-        <div className="absolute top-[-10%] right-[-10%] w-[600px] h-[600px] bg-sky-200/50 rounded-full blur-[140px]" />
-        <div className="absolute bottom-[-10%] left-[-10%] w-[600px] h-[600px] bg-indigo-200/40 rounded-full blur-[150px]" />
+    <div className="bg-slate-900/80 backdrop-blur-2xl p-7 rounded-2xl border border-slate-800/90 shadow-2xl">
+      <div className="flex items-center justify-between mb-5">
+        <h2 className="text-xl font-extrabold text-white flex items-center gap-3">
+          <span className="w-3 h-3 rounded-full bg-blue-500 shadow-lg shadow-blue-500/50"></span>
+          Quick Add Product (With Voice & Visual Preview)
+        </h2>
+        <div className="flex items-center gap-2 bg-slate-800/80 px-3 py-1.5 rounded-xl border border-slate-700 text-xs font-semibold text-slate-300">
+          <span>Auto Visual Preview:</span>
+          <span className="text-2xl">{previewIcon}</span>
+        </div>
+      </div>
+      <form onSubmit={handleSubmit} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+        <div>
+          <label className="block text-xs font-semibold text-slate-400 mb-2">Item Name (Try "Laptop")</label>
+          <input
+            ref={nameInputRef}
+            type="text"
+            placeholder="Type e.g. Gaming Laptop..."
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            className="w-full bg-slate-950/90 border border-slate-800 rounded-xl px-4 py-3.5 text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30 transition-all text-sm font-medium"
+          />
+        </div>
+        <div>
+          <label className="block text-xs font-semibold text-slate-400 mb-2">Category</label>
+          <select
+            value={category}
+            onChange={(e) => setCategory(e.target.value)}
+            className="w-full bg-slate-950/90 border border-slate-800 rounded-xl px-4 py-3.5 text-white focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30 transition-all text-sm font-medium"
+          >
+            <option value="Electronics">Electronics</option>
+            <option value="Accessories">Accessories</option>
+            <option value="General">General</option>
+          </select>
+        </div>
+        <div>
+          <label className="block text-xs font-semibold text-slate-400 mb-2">Price ($ USD)</label>
+          <input
+            type="number"
+            placeholder="e.g. 850"
+            value={price}
+            onChange={(e) => setPrice(e.target.value)}
+            className="w-full bg-slate-950/90 border border-slate-800 rounded-xl px-4 py-3.5 text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30 transition-all text-sm font-medium"
+          />
+        </div>
+        <div className="flex items-end">
+          <button
+            type="submit"
+            className="w-full h-[50px] bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white font-bold rounded-xl transition-all duration-200 shadow-xl shadow-blue-600/30 active:scale-[0.98] text-sm flex items-center justify-center gap-2"
+          >
+            <span className="text-lg">＋</span> Add to Inventory
+          </button>
+        </div>
+      </form>
+    </div>
+  );
+};
+
+// --- Main Dashboard Logic ---
+const DashboardContent = () => {
+  const { products, dispatch, speak } = useInventory();
+  const [search, setSearch] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('All');
+
+  const filteredProducts = useMemo(() => {
+    return products.filter((p) => {
+      const matchesSearch = p.name.toLowerCase().includes(search.toLowerCase());
+      const matchesCategory = selectedCategory === 'All' || p.category === selectedCategory;
+      return matchesSearch && matchesCategory;
+    });
+  }, [products, search, selectedCategory]);
+
+  const categoriesCount = useMemo(() => {
+    return new Set(products.map((p) => p.category)).size;
+  }, [products]);
+
+  const totalValue = useMemo(() => {
+    return products.reduce((acc, p) => acc + p.price, 0);
+  }, [products]);
+
+  const handleDelete = useCallback((id: string, name: string) => {
+    dispatch({ type: 'DELETE_PRODUCT', payload: id });
+    speak(`Removed ${name} from inventory.`);
+  }, [dispatch, speak]);
+
+  return (
+    <div className="space-y-8">
+      <Header />
+
+      {/* Stat Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <StatCard title="Total Products" value={products.length} color="bg-blue-500" icon="📦" subtitle="Items in storage" />
+        <StatCard title="Filtered View" value={filteredProducts.length} color="bg-indigo-500" icon="🔍" subtitle="Matching items" />
+        <StatCard title="Categories" value={categoriesCount} color="bg-emerald-500" icon="🏷️" subtitle="Divisions" />
+        <StatCard title="Total Valuation" value={`$${totalValue}`} color="bg-purple-500" icon="💎" subtitle="Calculated sum" />
       </div>
 
-      <Navbar title={dashboardData.appName} userName={dashboardData.user} />
+      {/* Form */}
+      <AddProductForm />
 
-      <main className="max-w-7xl mx-auto px-6 py-10 space-y-10">
-        
-        {/* === HERO HEADER SECTION === */}
-        <section className="bg-gradient-to-r from-slate-950 via-slate-900 to-indigo-950 rounded-3xl p-8 sm:p-10 text-white shadow-xl flex flex-col md:flex-row justify-between items-start md:items-center gap-6 relative overflow-hidden border border-slate-800">
-          <div className="space-y-3 z-10">
-            <div className="flex items-center gap-3">
-              <span className="inline-flex items-center gap-2 bg-sky-500/20 text-sky-300 text-xs font-bold px-4 py-1.5 rounded-full border border-sky-500/30">
-                <span className="w-2.5 h-2.5 rounded-full bg-sky-400 animate-ping" />
-                Voice-Enabled React Core Dashboard
-              </span>
-              {/* Test Audio Button to Unlock Browser Speech */}
-              <button 
-                type="button"
-                onClick={() => speakText("Voice system activated and ready.")}
-                className="bg-sky-600 hover:bg-sky-500 text-white text-xs font-bold px-3 py-1.5 rounded-full transition-all shadow-sm flex items-center gap-1.5 cursor-pointer"
-              >
-                <span>🔊</span> Test Audio
-              </button>
-            </div>
-            <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-white">
-              Inventory Master Dashboard
-            </h2>
-            <p className="text-slate-300 text-sm max-w-2xl leading-relaxed">
-              Fully interactive system with Web Speech API audio synthesis, live state management, and category filtering.
-            </p>
-          </div>
+      {/* Filters Bar */}
+      <div className="flex flex-col md:flex-row gap-4 items-center justify-between bg-slate-900/60 p-5 rounded-2xl border border-slate-800/90 shadow-xl">
+        <div className="w-full md:w-1/2 relative">
+          <input
+            type="text"
+            placeholder="Search items by name..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="w-full bg-slate-950/90 border border-slate-800 rounded-xl pl-11 pr-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 text-sm font-medium"
+          />
+          <span className="absolute left-4 top-3.5 text-slate-500 text-base">🔍</span>
+        </div>
+        <div className="flex gap-2 w-full md:w-auto overflow-x-auto pb-1 md:pb-0">
+          {['All', 'Electronics', 'Accessories', 'General'].map((cat) => (
+            <button
+              key={cat}
+              onClick={() => setSelectedCategory(cat)}
+              className={`px-5 py-2.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${
+                selectedCategory === cat
+                  ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-500/25 border border-blue-400/30'
+                  : 'bg-slate-800/80 text-slate-400 hover:bg-slate-800 hover:text-slate-200 border border-slate-700/50'
+              }`}
+            >
+              {cat}
+            </button>
+          ))}
+        </div>
+      </div>
 
-          <div className="z-10 bg-slate-900/80 backdrop-blur-xl px-6 py-3.5 rounded-2xl border border-slate-700/80 shadow-2xl flex flex-col items-end min-w-[170px]">
-            <span className="text-[10px] uppercase tracking-widest text-slate-400 font-extrabold">System Clock</span>
-            <span className="text-xl font-mono font-bold text-sky-400 tabular-nums">
-              {lastUpdated || 'Syncing...'}
-            </span>
-          </div>
-        </section>
-
-        {/* === SUMMARY METRICS SECTION === */}
-        <section className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <SummaryCard 
-            title="Total Inventory Items" 
-            value={products.length.toString()} 
-            description="Live reactivity via useState & useEffect"
-          >
-            <span className="text-xs font-semibold text-emerald-700 bg-emerald-100/80 px-3 py-1 rounded-full border border-emerald-300">
-              ✓ Voice Active
-            </span>
-          </SummaryCard>
-
-          <SummaryCard 
-            title="Filtered Catalog Count" 
-            value={filteredProducts.length.toString()} 
-            description={`Selected category: ${selectedCategory}`}
-          >
-            <span className="text-xs font-semibold text-sky-700 bg-sky-100/80 px-3 py-1 rounded-full border border-sky-300">
-              ⚡ Live Filter View
-            </span>
-          </SummaryCard>
-
-          <SummaryCard 
-            title="System Architecture" 
-            value="Optimal" 
-            description="Verified Component Unidirectional Flow"
-          >
-            <span className="text-xs font-semibold text-emerald-700 bg-emerald-100/80 px-3 py-1 rounded-full border border-emerald-300">
-              100% Validated
-            </span>
-          </SummaryCard>
-        </section>
-
-        {/* === CONTROLLED FORM WITH VOICE SYNTHESIS === */}
-        <section className="bg-white/90 backdrop-blur-2xl p-8 rounded-3xl border border-slate-200/80 shadow-sm space-y-6">
-          <div className="flex items-center justify-between border-b border-slate-100 pb-4">
-            <div>
-              <h3 className="text-xl font-bold text-slate-900 tracking-tight">Add New Inventory Product</h3>
-              <p className="text-xs text-slate-500">Add items and hear automatic voice confirmation</p>
-            </div>
-            <span className="text-xs bg-sky-50 text-sky-700 border border-sky-200 font-bold px-3.5 py-1.5 rounded-full flex items-center gap-1.5">
-              <span>🔊</span> Speech Synthesis Ready
-            </span>
-          </div>
-          
-          {formError && (
-            <div className="p-4 bg-rose-50 border border-rose-200 text-rose-700 text-xs rounded-2xl font-semibold flex items-center gap-2">
-              {formError}
-            </div>
-          )}
-
-          <form onSubmit={handleAddProduct} className="grid grid-cols-1 md:grid-cols-12 gap-4">
-            
-            {/* Product Name Input */}
-            <div className="md:col-span-4">
-              <label className="block text-xs font-bold text-slate-600 mb-1.5 uppercase tracking-wider">Product Name</label>
-              <input 
-                type="text" 
-                placeholder="e.g. Smart Watch" 
-                value={newProductName}
-                onChange={(e) => setNewProductName(e.target.value)}
-                className="w-full border border-slate-300/80 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500/30 focus:border-sky-500 bg-slate-50/50 focus:bg-white"
-              />
-            </div>
-
-            {/* Price Input */}
-            <div className="md:col-span-3">
-              <label className="block text-xs font-bold text-slate-600 mb-1.5 uppercase tracking-wider">Price ($ USD)</label>
-              <input 
-                type="number" 
-                placeholder="Price ($)" 
-                value={newProductPrice}
-                onChange={(e) => setNewProductPrice(e.target.value)}
-                className="w-full border border-slate-300/80 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500/30 focus:border-sky-500 bg-slate-50/50 focus:bg-white"
-              />
-            </div>
-
-            {/* Category Dropdown */}
-            <div className="md:col-span-3">
-              <label className="block text-xs font-bold text-slate-600 mb-1.5 uppercase tracking-wider">Select Category</label>
-              <select
-                value={newProductCategory}
-                onChange={(e) => setNewProductCategory(e.target.value)}
-                className="w-full border border-slate-300/80 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500/30 focus:border-sky-500 bg-slate-50/50 focus:bg-white text-slate-800 font-semibold cursor-pointer"
-              >
-                <option value="Electronics">Electronics</option>
-                <option value="Computers">Computers</option>
-                <option value="Accessories">Accessories</option>
-                <option value="General">General</option>
-              </select>
-            </div>
-
-            {/* Add Button */}
-            <div className="md:col-span-2 flex items-end">
-              <button 
-                type="submit" 
-                className="w-full bg-sky-600 hover:bg-sky-700 active:bg-sky-800 text-white font-bold py-3 px-6 rounded-2xl text-sm transition-all shadow-md shadow-sky-600/20 hover:shadow-lg flex items-center justify-center gap-2"
-              >
-                <span>+</span> Add Item
-              </button>
-            </div>
-          </form>
-        </section>
-
-        {/* === PRODUCT CATALOG & FILTER BAR === */}
-        <section className="space-y-6">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white/80 backdrop-blur-xl p-5 rounded-2xl border border-slate-200/80 shadow-sm">
-            <div>
-              <h3 className="text-2xl font-bold text-slate-900 tracking-tight">Product Catalog</h3>
-              <p className="text-xs text-slate-500">Real-time inventory view filtered by category</p>
-            </div>
-            
-            <div className="flex items-center space-x-3 text-sm bg-slate-100/80 p-1.5 rounded-2xl border border-slate-200">
-              <span className="text-slate-600 font-extrabold text-xs uppercase tracking-widest pl-3">Filter View:</span>
-              <select 
-                value={selectedCategory} 
-                onChange={(e) => {
-                  setSelectedCategory(e.target.value);
-                  speakText(`Showing ${e.target.value}`);
-                }}
-                className="border border-slate-300 rounded-xl px-4 py-1.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-sky-500 font-bold text-slate-800 cursor-pointer shadow-sm"
-              >
-                <option value="All">All Categories</option>
-                <option value="Electronics">Electronics</option>
-                <option value="Computers">Computers</option>
-                <option value="Accessories">Accessories</option>
-                <option value="General">General</option>
-              </select>
-            </div>
-          </div>
-
-          {filteredProducts.length === 0 ? (
-            <div className="p-16 text-center bg-white rounded-3xl border-2 border-dashed border-slate-200 text-slate-500 space-y-3">
-              <div className="text-4xl">📦</div>
-              <p className="font-bold text-slate-800 text-base">No items found</p>
-              <p className="text-xs max-w-sm mx-auto">There are currently no inventory products under "{selectedCategory}".</p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {filteredProducts.map((product) => (
-                <div key={product.id} className="relative group transition-all duration-300 hover:-translate-y-1">
-                  <ProductCard 
-                    name={product.name}
-                    price={product.price}
-                    category={product.category}
-                    status={product.status}
-                  />
-                  <button 
-                    onClick={() => handleDeleteProduct(product.id, product.name)}
-                    className="absolute top-4 right-4 text-xs bg-slate-100 hover:bg-rose-100 text-slate-400 hover:text-rose-600 px-3 py-1 rounded-full font-bold transition-all opacity-0 group-hover:opacity-100 border border-slate-200"
-                    title="Remove item"
-                  >
-                    ✕ Remove
-                  </button>
+      {/* Product Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 min-h-[300px]">
+        {filteredProducts.map((product) => {
+          const visualIcon = getProductImage(product.name);
+          return (
+            <div
+              key={product.id}
+              className="group relative bg-slate-900/70 backdrop-blur-xl p-6 rounded-2xl border border-slate-800/90 hover:border-blue-500/50 transition-all duration-300 hover:shadow-2xl hover:shadow-blue-500/10 flex flex-col justify-between overflow-hidden"
+            >
+              <div>
+                <div className="flex justify-between items-start mb-4">
+                  <span className="text-[11px] font-extrabold uppercase tracking-widest px-3 py-1 rounded-lg bg-slate-800 text-blue-400 border border-slate-700/60 shadow-inner">
+                    {product.category}
+                  </span>
+                  <span className="text-2xl font-black text-emerald-400 font-mono">
+                    ${product.price}
+                  </span>
                 </div>
-              ))}
-            </div>
-          )}
-        </section>
 
-      </main>
+                {/* Visual Preview Banner */}
+                <div className="w-full h-32 my-3 rounded-xl bg-slate-950/80 border border-slate-800/80 flex items-center justify-center text-5xl group-hover:scale-105 transition-transform duration-300 shadow-inner">
+                  {visualIcon}
+                </div>
+
+                <h3 className="text-lg font-bold text-white group-hover:text-blue-300 transition-colors mt-2">
+                  {product.name}
+                </h3>
+              </div>
+              <div className="mt-6 pt-4 border-t border-slate-800/80 flex justify-between items-center">
+                <span className="text-xs text-slate-500 font-mono">Saved Item</span>
+                <button
+                  onClick={() => handleDelete(product.id, product.name)}
+                  className="text-xs font-bold text-rose-400 hover:text-rose-200 bg-rose-500/10 hover:bg-rose-500/20 px-4 py-2 rounded-xl border border-rose-500/20 transition-all active:scale-95 flex items-center gap-1.5"
+                >
+                  <span>🗑️</span> Delete
+                </button>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {filteredProducts.length === 0 && (
+        <div className="text-center py-16 bg-slate-900/40 rounded-2xl border border-dashed border-slate-800">
+          <p className="text-slate-400 text-base font-medium">No inventory items found.</p>
+        </div>
+      )}
     </div>
+  );
+};
+
+// --- Root Component ---
+export default function Page() {
+  const [products, dispatch] = useReducer(inventoryReducer, initialProducts);
+  const { speak } = useSpeech();
+
+  // Load from LocalStorage on mount
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('inventory_items');
+      if (saved) {
+        try {
+          dispatch({ type: 'SET_PRODUCTS', payload: JSON.parse(saved) });
+        } catch (e) {
+          console.error(e);
+        }
+      }
+    }
+  }, []);
+
+  return (
+    <InventoryContext.Provider value={{ products, dispatch, speak }}>
+      <main className="min-h-screen bg-slate-950 text-slate-100 p-4 sm:p-8 lg:p-12 font-sans selection:bg-blue-500 selection:text-white">
+        <div className="w-full max-w-[1800px] mx-auto space-y-8">
+          <DashboardContent />
+        </div>
+      </main>
+    </InventoryContext.Provider>
   );
 }
