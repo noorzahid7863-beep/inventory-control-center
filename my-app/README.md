@@ -11,7 +11,7 @@ A modern, high-performance **Inventory Control Center Dashboard** built with **N
 * **🔍 Optimized Dynamic Filtering**: Utilizing `useMemo` for high-performance search execution across real-time inventory queries and category filters without unnecessary component re-renders.
 * **💾 LocalStorage State Persistence**: Automatic state syncing to browser storage to maintain data integrity across sessions.
 * **🎯 Precision Focus Control**: Direct DOM access managed via `useRef` to auto-focus form inputs seamlessly after operations.
-* **📱 Responsive Glassmorphism Layout**: Ultra-wide responsive full-screen architecture (`max-w-[1800px]`) featuring dark mode gradient borders, dynamic category visuals, and responsive metric cards.
+* **📱 Responsive Glassmorphic Layout**: Ultra-wide responsive full-screen architecture (`max-w-[1800px]`) featuring dark mode gradient borders, dynamic category visuals, and responsive metric cards.
 
 ---
 

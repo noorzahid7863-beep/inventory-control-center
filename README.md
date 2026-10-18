@@ -1,47 +1,44 @@
-# 📦 Inventory Master Dashboard — React Core Concepts (3-Day Complete)
+# 📦 Inventory Control Center — Advanced React 19 Engine
 
-A high-performance, aesthetically professional Inventory Management Dashboard built with **Next.js**, **React**, **TypeScript**, and **Tailwind CSS**. This repository serves as the official capstone project for the **React Core Concepts (3-Day Roadmap)**, demonstrating clean component composition, state management, lifecycle hooks, controlled forms, conditional rendering, and browser Web Speech API voice synthesis.
-
----
-
-## 🌟 Key Features & Implementation Breakdown
-
-### 1. **Day 1: Component Architecture & Props**
-* **Modular Components:** Divided into clean sub-components including `Navbar`, `SummaryCard`, and `ProductCard`.
-* **Prop Passing & Children Prop:** Demonstrates unidirectional data flow, custom layout children injection, and strong TypeScript interfaces.
-* **Saas UI Design:** Modern glassmorphism card layouts, hover responsiveness, and clean typography.
-
-### 2. **Day 2: State Management & Interactivity**
-* **`useState` Integration:** Reactive state updates for total inventory items, filtering categories, and real-time product list management.
-* **Interactive Dynamic Catalog:** Ability to dynamically add new products and remove existing items live without page reload.
-* **Controlled Forms:** Form inputs bound directly to React state variables.
-
-### 3. **Day 3: Lifecycle, Validation & Voice Engine**
-* **`useEffect` Lifecycle Hook:** Real-time system clock updating every second with automatic cleanup intervals.
-* **Form Validation:** Real-time error handling with voice-assisted alerts for empty product names or invalid prices.
-* **Conditional Filtering:** Dynamic view filtering by categories (*All, Electronics, Computers, Accessories, General*).
-* **Web Speech API:** Browser native Text-to-Speech voice feedback when adding/removing items or triggering validation errors.
+A modern, high-performance **Inventory Control Center Dashboard** built with **Next.js 19, TypeScript, Tailwind CSS, and Web APIs**. Designed as part of **Week 4: Advanced React State & Architecture**, this application transitions basic state patterns into enterprise-grade React architecture utilizing memoization, global context, persistent browser state, and integrated Speech Synthesis feedback.
 
 ---
 
-## 🛠️ Tech Stack & Dependencies
+## 🚀 Key Features
 
-* **Framework:** Next.js (App Router)
-* **Library:** React 19
-* **Language:** TypeScript
-* **Styling:** Tailwind CSS (Glassmorphism, Gradient Grids, Custom Animations)
-* **Voice Engine:** Web Speech API (`window.speechSynthesis`)
+* **⚡ Advanced React State Architecture**: Powered by `useReducer` and the `React Context API` for centralized, clean action-based state management.
+* **🔊 Real-Time Voice Synthesis (`useSpeech`)**: Integrated Web Speech API providing instantaneous natural voice announcements when items are created, modified, or removed.
+* **🔍 Optimized Dynamic Filtering**: Utilizing `useMemo` for high-performance search execution across real-time inventory queries and category filters without unnecessary component re-renders.
+* **💾 LocalStorage State Persistence**: Automatic state syncing to browser storage to maintain data integrity across sessions.
+* **🎯 Precision Focus Control**: Direct DOM access managed via `useRef` to auto-focus form inputs seamlessly after operations.
+* **📱 Responsive Glassmorphic Layout**: Ultra-wide responsive full-screen architecture (`max-w-[1800px]`) featuring dark mode gradient borders, dynamic category visuals, and responsive metric cards.
 
 ---
 
-## 🚀 Getting Started
+## 🛠️ Tech Stack & Architecture
 
-### Prerequisites
-Make sure you have Node.js (v18+) installed on your machine.
+* **Framework**: Next.js 19 (App Router)
+* **Language**: TypeScript
+* **Styling**: Tailwind CSS (Glassmorphic UI, Dark Gradients, Responsive Grid)
+* **Hooks & Core APIs**: `useReducer`, `useMemo`, `useCallback`, `useRef`, `useContext`, `useEffect`
+* **Browser APIs**: Web Speech Synthesis API (`window.speechSynthesis`), `localStorage`
 
-### Installation & Local Setup
+---
 
-1. **Clone the repository:**
-   ```bash
-   git clone [https://github.com/your-username/my-app.git](https://github.com/your-username/my-app.git)
-   cd my-app
+## 📁 Project Structure
+
+```text
+my-app/
+├── src/
+│   ├── app/
+│   │   ├── page.tsx               # Main Master Control Dashboard View
+│   │   ├── layout.tsx             # Root Application Layout & Font Providers
+│   │   └── globals.css            # Custom Utilities & Glassmorphism Rules
+│   ├── components/
+│   │   └── Navbar.jsx             # Application Navigation Header
+│   ├── context/
+│   │   └── InventoryContext.tsx   # React Context API Provider & Custom Hook
+│   └── hooks/
+│       └── useSpeech.ts           # Speech Synthesis Web API Abstraction
+├── package.json
+└── README.md                      # Project Documentation & Architecture Overview
