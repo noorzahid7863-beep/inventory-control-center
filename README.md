@@ -9,18 +9,19 @@ A modern, high-performance Inventory Control Center Dashboard built with Next.js
 * 🔍 **Optimized Dynamic Filtering:** Utilizing `useMemo` for high-performance search execution across real-time inventory queries and category filters without unnecessary component re-renders.
 * 💾 **LocalStorage State Persistence:** Automatic state syncing to browser storage to maintain data integrity across sessions.
 * 🎯 **Precision Focus Control:** Direct DOM access managed via `useRef` to auto-focus form inputs seamlessly after operations.
-* responsive Glassmorphic Layout: Ultra-wide responsive full-screen architecture (`max-w-[1800px]`) featuring dark mode gradient borders, dynamic category visuals, and responsive metric cards.
+* 📱 **Responsive Glassmorphic Layout:** Ultra-wide responsive full-screen architecture (`max-w-[1800px]`) featuring dark mode gradient borders, dynamic category visuals, and responsive metric cards.
 
 ## 🛠️ Tech Stack & Architecture
 
-* **Framework:** Next.js 16 (App Router)[cite: 6]
-* **Language:** TypeScript[cite: 6]
-* **Styling:** Tailwind CSS (Glassmorphic UI, Dark Gradients, Responsive Grid)[cite: 6]
-* **Hooks & Core APIs:** `useReducer`, `useMemo`, `useCallback`, `useRef`, `useContext`, `useEffect`[cite: 6]
-* **Browser APIs:** Web Speech Synthesis API (`window.speechSynthesis`), `localStorage`[cite: 6]
+* **Framework:** Next.js 16 (App Router)
+* **Language:** TypeScript
+* **Styling:** Tailwind CSS (Glassmorphic UI, Dark Gradients, Responsive Grid)
+* **Hooks & Core APIs:** `useReducer`, `useMemo`, `useCallback`, `useRef`, `useContext`, `useEffect`
+* **Browser APIs:** Web Speech Synthesis API (`window.speechSynthesis`), `localStorage`
 
 ## 📁 Project Structure
 
+```text
 my-app/
 ├── src/
 │   ├── app/
