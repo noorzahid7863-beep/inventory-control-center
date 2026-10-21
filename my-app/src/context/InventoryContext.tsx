@@ -1,77 +1,86 @@
-"use client";
+'use client';
 
-import React, { createContext, useContext, useReducer, ReactNode } from "react";
+import React, { createContext, useContext, useReducer, useEffect } from 'react';
+import { useSpeech } from '@/hooks/useSpeech';
 
 export interface Product {
   id: string;
-  title: string;
+  name: string;
   category: string;
   price: number;
+  imageUrl?: string;
 }
 
 type Action =
-  | { type: "ADD_PRODUCT"; payload: Product }
-  | { type: "DELETE_PRODUCT"; payload: string };
+  | { type: 'SET_PRODUCTS'; payload: Product[] }
+  | { type: 'ADD_PRODUCT'; payload: Omit<Product, 'id'> }
+  | { type: 'DELETE_PRODUCT'; payload: string };
 
-interface State {
+interface InventoryContextType {
   products: Product[];
+  dispatch: React.Dispatch<Action>;
+  speak: (text: string) => void;
 }
 
 const initialProducts: Product[] = [
-  { id: "1", title: "Wireless Mouse", category: "Accessories", price: 25 },
-  { id: "2", title: "Gaming Keyboard", category: "Accessories", price: 75 },
-  { id: "3", title: "27-inch Monitor", category: "Electronics", price: 300 },
-  { id: "4", title: "Laptop Stand", category: "General", price: 40 },
+  { id: '1', name: 'Laptop Pro Max', category: 'Electronics', price: 1200 },
+  { id: '2', name: 'Wireless Mouse', category: 'Accessories', price: 25 },
+  { id: '3', name: 'Gaming Keyboard', category: 'Accessories', price: 75 },
+  { id: '4', name: '27-inch Monitor', category: 'Electronics', price: 300 },
 ];
 
-function inventoryReducer(state: State, action: Action): State {
+function inventoryReducer(state: Product[], action: Action): Product[] {
+  let newState: Product[];
   switch (action.type) {
-    case "ADD_PRODUCT":
-      return { ...state, products: [action.payload, ...state.products] };
-    case "DELETE_PRODUCT":
-      return {
+    case 'SET_PRODUCTS':
+      return action.payload;
+    case 'ADD_PRODUCT':
+      newState = [
+        { ...action.payload, id: Date.now().toString() },
         ...state,
-        products: state.products.filter((p) => p.id !== action.payload),
-      };
+      ];
+      break;
+    case 'DELETE_PRODUCT':
+      newState = state.filter((p) => p.id !== action.payload);
+      break;
     default:
       return state;
   }
+
+  if (typeof window !== 'undefined') {
+    localStorage.setItem('inventory_items', JSON.stringify(newState));
+  }
+  return newState;
 }
 
-interface ContextType {
-  products: Product[];
-  addProduct: (product: Product) => void;
-  deleteProduct: (id: string) => void;
-}
+const InventoryContext = createContext<InventoryContextType | undefined>(undefined);
 
-const InventoryContext = createContext<ContextType | undefined>(undefined);
+export const InventoryProvider = ({ children }: { children: React.ReactNode }) => {
+  const [products, dispatch] = useReducer(inventoryReducer, initialProducts);
+  const { speak } = useSpeech();
 
-export function InventoryProvider({ children }: { children: ReactNode }) {
-  const [state, dispatch] = useReducer(inventoryReducer, {
-    products: initialProducts,
-  });
-
-  const addProduct = (product: Product) => {
-    dispatch({ type: "ADD_PRODUCT", payload: product });
-  };
-
-  const deleteProduct = (id: string) => {
-    dispatch({ type: "DELETE_PRODUCT", payload: id });
-  };
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('inventory_items');
+      if (saved) {
+        try {
+          dispatch({ type: 'SET_PRODUCTS', payload: JSON.parse(saved) });
+        } catch (e) {
+          console.error(e);
+        }
+      }
+    }
+  }, []);
 
   return (
-    <InventoryContext.Provider
-      value={{ products: state.products, addProduct, deleteProduct }}
-    >
+    <InventoryContext.Provider value={{ products, dispatch, speak }}>
       {children}
     </InventoryContext.Provider>
   );
-}
+};
 
-export function useInventory() {
+export const useInventory = () => {
   const context = useContext(InventoryContext);
-  if (!context) {
-    throw new Error("useInventory must be used within an InventoryProvider");
-  }
+  if (!context) throw new Error('useInventory must be used within InventoryProvider');
   return context;
-}
+};
