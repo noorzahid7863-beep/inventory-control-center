@@ -7,6 +7,7 @@ import ProductCard from '@/components/ProductCard';
 import ExternalApiFeed from '@/components/ExternalApiFeed';
 import { InventoryProvider, useInventory } from '@/context/InventoryContext';
 
+// Helper function to get emoji icons based on product name
 const getProductImage = (name: string) => {
   const lowerName = name.toLowerCase();
   if (lowerName.includes('laptop') || lowerName.includes('computer') || lowerName.includes('macbook')) return '💻';
@@ -25,6 +26,8 @@ const AddProductForm = () => {
   const [name, setName] = useState('');
   const [category, setCategory] = useState('Electronics');
   const [price, setPrice] = useState('');
+
+  // 1. DAY 1 HOOK: useRef (Direct DOM input focus handling)
   const nameInputRef = useRef<HTMLInputElement>(null);
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -40,6 +43,8 @@ const AddProductForm = () => {
     speak(`Added ${name} to inventory for ${numPrice} dollars.`);
     setName('');
     setPrice('');
+
+    // Fast and seamless auto-focus back to input
     nameInputRef.current?.focus();
   };
 
@@ -50,10 +55,10 @@ const AddProductForm = () => {
       <div className="flex items-center justify-between mb-5">
         <h2 className="text-xl font-extrabold text-white flex items-center gap-3">
           <span className="w-3 h-3 rounded-full bg-blue-500 shadow-lg shadow-blue-500/50"></span>
-          Quick Add Product (With Voice & Visual Preview)
+          Quick Add Product
         </h2>
         <div className="flex items-center gap-2 bg-slate-800/80 px-3 py-1.5 rounded-xl border border-slate-700 text-xs font-semibold text-slate-300">
-          <span>Auto Visual Preview:</span>
+          <span>Visual Preview:</span>
           <span className="text-2xl">{previewIcon}</span>
         </div>
       </div>
@@ -109,6 +114,7 @@ const DashboardContent = () => {
   const [search, setSearch] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
 
+  // 2. DAY 1 HOOK: useMemo (Optimized filtering & valuation calculations)
   const filteredProducts = useMemo(() => {
     return products.filter((p) => {
       const matchesSearch = p.name.toLowerCase().includes(search.toLowerCase());
@@ -120,6 +126,7 @@ const DashboardContent = () => {
   const categoriesCount = useMemo(() => new Set(products.map((p) => p.category)).size, [products]);
   const totalValue = useMemo(() => products.reduce((acc, p) => acc + p.price, 0), [products]);
 
+  // 3. DAY 1 HOOK: useCallback (Memoized deletion handler to optimize render tree)
   const handleDelete = useCallback((id: string, name: string) => {
     dispatch({ type: 'DELETE_PRODUCT', payload: id });
     speak(`Removed ${name} from inventory.`);
@@ -129,7 +136,7 @@ const DashboardContent = () => {
     <div className="space-y-8">
       <Navbar title="Inventory Control Center" userName="Noor Zahid" />
 
-      {/* Summary Cards */}
+      {/* Summary Metrics Section */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         <SummaryCard title="Total Products" value={products.length} color="bg-blue-500" icon="📦" subtitle="Items in storage" />
         <SummaryCard title="Filtered View" value={filteredProducts.length} color="bg-indigo-500" icon="🔍" subtitle="Matching items" />
@@ -137,9 +144,10 @@ const DashboardContent = () => {
         <SummaryCard title="Total Valuation" value={`$${totalValue}`} color="bg-purple-500" icon="💎" subtitle="Calculated sum" />
       </div>
 
+      {/* Quick Add Product Form */}
       <AddProductForm />
 
-      {/* Product Grid */}
+      {/* Product Display Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 min-h-[300px]">
         {filteredProducts.map((product) => (
           <ProductCard
@@ -151,6 +159,7 @@ const DashboardContent = () => {
         ))}
       </div>
 
+      {/* External Data Stream Feed */}
       <ExternalApiFeed />
     </div>
   );
