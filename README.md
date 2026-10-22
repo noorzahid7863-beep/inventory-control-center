@@ -1,25 +1,31 @@
-# 📦 Inventory Control Center — Advanced React 16 Engine
+# 📦 Inventory Control Center — Advanced React 19 Engine
 
-A modern, high-performance Inventory Control Center Dashboard built with Next.js 16 (React 19), TypeScript, Tailwind CSS, and Web APIs. Designed as part of Week 4: Advanced React State & Architecture, this application transitions basic state patterns into enterprise-grade React architecture utilizing memoization, global context, persistent browser state, and integrated Speech Synthesis feedback.
+A modern, high-performance Inventory Control Center Dashboard built with Next.js 15 (React 19), TypeScript, Tailwind CSS, and Web APIs. Designed as part of **Week 4: Advanced React State & Architecture**, this application transitions basic state patterns into enterprise-grade React architecture utilizing memoization, global context, persistent browser state, and integrated Speech Synthesis feedback.
 
-## 🚀 Key Features
+---
 
-* ⚡ **Advanced React State Architecture:** Powered by `useReducer` and the `React Context API` for centralized, clean action-based state management.
-* 🔊 **Real-Time Voice Synthesis (`useSpeech`):** Integrated Web Speech API providing instantaneous natural voice announcements when items are created, modified, or removed.
-* 🔍 **Optimized Dynamic Filtering:** Utilizing `useMemo` for high-performance search execution across real-time inventory queries and category filters without unnecessary component re-renders.
-* 💾 **LocalStorage State Persistence:** Automatic state syncing to browser storage to maintain data integrity across sessions.
-* 🎯 **Precision Focus Control:** Direct DOM access managed via `useRef` to auto-focus form inputs seamlessly after operations.
-* 📱 **Responsive Glassmorphic Layout:** Ultra-wide responsive full-screen architecture (`max-w-[1800px]`) featuring dark mode gradient borders, dynamic category visuals, and responsive metric cards.
+## ✨ Key Features
+
+* **Advanced React State Architecture:** Powered by `useReducer` and the `React Context API` for centralized, clean action-based state management.
+* **Performance Optimization (Hooks):** Integrated `useMemo` for real-time inventory queries/calculations and `useCallback` for stable event handler memoization.
+* **Precision Focus Control:** Direct DOM access managed via `useRef` to auto-focus form inputs seamlessly after submit actions.
+* **Real-Time Voice Synthesis (`useSpeech`):** Integrated Web Speech API providing instantaneous natural voice announcements when items are created or deleted.
+* **LocalStorage State Persistence:** Automatic state syncing to browser storage to maintain data integrity across sessions.
+* **Responsive Glassmorphic Layout:** Ultra-wide responsive full-screen architecture featuring dark mode gradient borders, dynamic category visuals, and responsive metric cards.
+
+---
 
 ## 🛠️ Tech Stack & Architecture
 
-* **Framework:** Next.js 16 (App Router)
+* **Framework:** Next.js 15 (App Router)
 * **Language:** TypeScript
 * **Styling:** Tailwind CSS (Glassmorphic UI, Dark Gradients, Responsive Grid)
 * **Hooks & Core APIs:** `useReducer`, `useMemo`, `useCallback`, `useRef`, `useContext`, `useEffect`
 * **Browser APIs:** Web Speech Synthesis API (`window.speechSynthesis`), `localStorage`
 
-## 📁 Project Structure
+---
+
+## 📂 Project Structure
 
 ```text
 my-app/
@@ -34,7 +40,7 @@ my-app/
 │   │   ├── Navbar.tsx         # Application Navigation Header
 │   │   ├── ProductCard.tsx    # Modular Product Card Display
 │   │   ├── SummaryCard.tsx    # Metric Summary Card Component
-│   │   └── ExternalApiFeed.tsx# TanStack Query External Feed Component
+│   │   └── ExternalApiFeed.tsx# External Supplier Data Stream Feed Component
 │   ├── context/
 │   │   └── InventoryContext.tsx # React Context API Provider & Custom Hook
 │   └── hooks/
