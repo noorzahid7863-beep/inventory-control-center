@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useReducer, useEffect } from 'react';
+import React, { createContext, useContext, useReducer, useEffect, ReactNode } from 'react';
 import { useSpeech } from '@/hooks/useSpeech';
 
 export interface Product {
@@ -19,6 +19,8 @@ type Action =
 interface InventoryContextType {
   products: Product[];
   dispatch: React.Dispatch<Action>;
+  addProduct: (product: Omit<Product, 'id'>) => void;
+  deleteProduct: (id: string) => void;
   speak: (text: string) => void;
 }
 
@@ -55,7 +57,7 @@ function inventoryReducer(state: Product[], action: Action): Product[] {
 
 const InventoryContext = createContext<InventoryContextType | undefined>(undefined);
 
-export const InventoryProvider = ({ children }: { children: React.ReactNode }) => {
+export const InventoryProvider = ({ children }: { children: ReactNode }) => {
   const [products, dispatch] = useReducer(inventoryReducer, initialProducts);
   const { speak } = useSpeech();
 
@@ -72,8 +74,16 @@ export const InventoryProvider = ({ children }: { children: React.ReactNode }) =
     }
   }, []);
 
+  const addProduct = (product: Omit<Product, 'id'>) => {
+    dispatch({ type: 'ADD_PRODUCT', payload: product });
+  };
+
+  const deleteProduct = (id: string) => {
+    dispatch({ type: 'DELETE_PRODUCT', payload: id });
+  };
+
   return (
-    <InventoryContext.Provider value={{ products, dispatch, speak }}>
+    <InventoryContext.Provider value={{ products, dispatch, addProduct, deleteProduct, speak }}>
       {children}
     </InventoryContext.Provider>
   );
